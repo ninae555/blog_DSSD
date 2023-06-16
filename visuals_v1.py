@@ -119,53 +119,72 @@ pio.write_html(fig, "visualization.html")
 
 
 # %%
+replace_dict = {
+    "Non-ferrous metal": "Non-Ferrous Metal",
+    "Non-ferrous metals": "Non-Ferrous Metal",
+    "Non-Ferrous Metals": "Non-Ferrous Metal",
+    "Plastics": "Plastic",
+    "Ferrous metal": "Ferrous Metal",
+    "Paper/Cardboard": "Paper"
+}
+
+data["waste_type"] = data["waste_type"].replace(replace_dict)
+
+#%%
+
+clean_energy_saved = (
+    energy_saved.T.iloc[1:, 2:]
+    .reset_index(drop=True)
+    .rename(columns={2: "material", 3: "energy_saved", 4: "crude_oil_saved"})
+)
+
+clean_energy_saved["energy_saved"] = clean_energy_saved["energy_saved"].str.replace("kWh", "").str.replace("Kwh", "")
+
+clean_energy_saved["energy_saved"] = clean_energy_saved["energy_saved"].astype(int)
+
+clean_energy_saved
+
+
+
+# %%
+total_data = data.merge(clean_energy_saved, how="left", left_on="waste_type", right_on="material").dropna()
+
+total_data["energy_saved"] = total_data["energy_saved"].astype(int)
+
+total_data.head()
+
+
+# %%
+total_data["total_energy_saved"] = total_data["total_waste_recycled_tonne"] * total_data["energy_saved"]
+
+total_data.head()
+
+# %%
+
 import plotly.graph_objects as go
-import plotly.io as pio
 
-# Create a line plot
-fig = go.Figure()
+# Calculate the total energy saved for each material
+total_energy_by_material = total_data.groupby('material')['total_energy_saved'].sum().reset_index()
 
-fig.add_trace(
-    go.Scatter(
-        x=overall["year"],
-        y=overall["total_waste_generated_tonne"],
-        mode='lines',
-        name='Waste Generated'
-    )
-)
+fig = go.Figure(go.Sunburst(
+    labels=total_energy_by_material['material'],
+    parents=[''] * len(total_energy_by_material),
+    values=total_energy_by_material['total_energy_saved'],
+))
 
-fig.add_trace(
-    go.Scatter(
-        x=overall["year"],
-        y=overall["total_waste_recycled_tonne"],
-        mode='lines',
-        name='Waste Recycled'
-    )
-)
+fig.update_layout(title='Sunburst Chart - Material Breakdown',
+                  height=600,
+                  width=600)
 
-# Customize the layout
-fig.update_layout(
-    title='Waste Generated and Recycled Over the Years',
-    xaxis_title='Year',
-    yaxis_title='Amount (tonnes)',
-    font=dict(
-        family="Arial",
-        size=12,
-        color="black"
-    ),
-    plot_bgcolor='white',
-    legend=dict(
-        x=0.8,
-        y=0.95,
-        bgcolor='white',
-        bordercolor='black',
-        borderwidth=1
-    )
-)
+pio.write_html(fig, "visualization2.html")
 
-# Save the figure as an HTML file
-pio.write_html(fig, "visualization.html")
 
+# %%
+annual_energy_savings = total_data.groupby("year").sum().reset_index()
+annual_energy_savings["total_energy_saved"] = (annual_energy_savings["total_energy_saved"] / 1000000).round(2).astype(str) + " GWh"
+annual_energy_savings = annual_energy_savings.astype({"total_energy_saved": str})
+
+annual_energy_savings.tail()
 
 
 # %%
