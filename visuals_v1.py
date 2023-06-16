@@ -160,6 +160,7 @@ total_data["total_energy_saved"] = total_data["total_waste_recycled_tonne"] * to
 total_data.head()
 
 # %%
+# Sunburst Chart
 
 import plotly.graph_objects as go
 
@@ -172,7 +173,7 @@ fig = go.Figure(go.Sunburst(
     values=total_energy_by_material['total_energy_saved'],
 ))
 
-fig.update_layout(title='Sunburst Chart - Material Breakdown',
+fig.update_layout(title=' Material Breakdown',
                   height=600,
                   width=600)
 
@@ -180,6 +181,8 @@ pio.write_html(fig, "visualization2.html")
 
 
 # %%
+# Energy saved per year
+
 annual_energy_savings = total_data.groupby("year").sum().reset_index()
 annual_energy_savings["total_energy_saved"] = (annual_energy_savings["total_energy_saved"] / 1000000).round(2).astype(str) + " GWh"
 annual_energy_savings = annual_energy_savings.astype({"total_energy_saved": str})
