@@ -172,6 +172,15 @@ total_data.head()
 import plotly.io as pio
 import plotly.graph_objects as go
 
+# Function to format numbers with B for billion and M for million
+def format_number(value):
+    if value >= 1e9:
+        return f'{value / 1e9:.1f}B'
+    elif value >= 1e6:
+        return f'{value / 1e6:.1f}M'
+    else:
+        return str(value)
+
 # Calculate the total energy saved for each material
 total_energy_by_material = total_data.groupby('material')['total_energy_saved'].sum().reset_index()
 
@@ -179,7 +188,8 @@ fig = go.Figure(go.Sunburst(
     labels=total_energy_by_material['material'],
     parents=[''] * len(total_energy_by_material),
     values=total_energy_by_material['total_energy_saved'],
-    hovertemplate='<b>%{label}</b><br>Total Energy Saved: %{value:.2f}',
+    hovertemplate='<b>%{label}</b><br>Total Energy Saved: %{customdata}',
+    customdata=[format_number(value) for value in total_energy_by_material['total_energy_saved']],
 ))
 
 fig.update_layout(title='Material Breakdown',
@@ -187,6 +197,7 @@ fig.update_layout(title='Material Breakdown',
                   width=600)
 
 pio.write_html(fig, "visualization2.html")
+
 
 
 
