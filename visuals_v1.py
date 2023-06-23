@@ -100,21 +100,29 @@ processed_df.head()
 
 #%%
 import plotly.express as px
+import plotly.graph_objects as go
 
 data = pd.concat([clean_waste_18_20, clean_waste_03_17]).sort_values(by="year")
 overall = data[(data["waste_type"] == "Overall") | (data["waste_type"] == "Total")]
 
-fig = px.bar(overall, x="year", y=["total_waste_generated_tonne", "total_waste_recycled_tonne"],
-             barmode="group", labels={"value": "Waste (tonnes)", "variable": "Type"})
+fig = go.Figure()
+
+# Add lines for total waste generated and total waste recycled
+fig.add_trace(go.Scatter(x=overall["year"], y=overall["total_waste_generated_tonne"],
+                         mode='lines', name='Total Waste Generated',
+                         line=dict(color='rgba(31, 119, 180, 0.8)')))
+
+fig.add_trace(go.Scatter(x=overall["year"], y=overall["total_waste_recycled_tonne"],
+                         mode='lines', name='Total Waste Recycled',
+                         line=dict(color='rgba(255, 127, 14, 0.8)')))
 
 fig.update_layout(title="Overall Waste Generation and Recycling Over the Years",
                   xaxis_title="Year", yaxis_title="Waste (tonnes)",
                   legend_title="Type")
 
-import plotly.io as pio
-
 # Save the figure as an HTML file
-pio.write_html(fig, "visualization.html")
+fig.write_html("visualization.html")
+
 
 
 
@@ -161,7 +169,7 @@ total_data.head()
 
 # %%
 # Sunburst Chart
-
+import plotly.io as pio
 import plotly.graph_objects as go
 
 # Calculate the total energy saved for each material
@@ -171,13 +179,15 @@ fig = go.Figure(go.Sunburst(
     labels=total_energy_by_material['material'],
     parents=[''] * len(total_energy_by_material),
     values=total_energy_by_material['total_energy_saved'],
+    hovertemplate='<b>%{label}</b><br>Total Energy Saved: %{value:.2f}',
 ))
 
-fig.update_layout(title=' Material Breakdown',
+fig.update_layout(title='Material Breakdown',
                   height=600,
                   width=600)
 
 pio.write_html(fig, "visualization2.html")
+
 
 
 # %%
